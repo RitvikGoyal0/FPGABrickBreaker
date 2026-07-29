@@ -1,9 +1,9 @@
-module game_logic#(
+module game_logic #(
     //States
-    parameter          STATE_IDLE,
-    parameter          STATE_START,
-    parameter          STATE_PLAY,
-    parameter          STATE_OVER,
+    parameter STATE_IDLE  = 2'd0,
+    parameter STATE_START = 2'd1,
+    parameter STATE_PLAY  = 2'd2,
+    parameter STATE_OVER  = 2'd3,
 
     //DEFAULT VALUES
     parameter          BALL_START_X,
@@ -29,104 +29,176 @@ module game_logic#(
     output reg signed [10:0]   paddle_pos_x,
     output reg        [1:0]    state
 );
-   
-
-    //Internal storage elements
 
 
-    //Game Elements
-    //ball
-    reg signed  [3:0]   ball_dx         = BALL_START_DX;
-    reg signed  [3:0]   ball_dy         = BALL_START_DY;
+  //Internal storage elements
 
-    //lives
-    reg [1:0]           lives           = START_LIVES;
+  wire               collided;
+  wire        [ 7:0] brick_index;
+  wire        [ 1:0] collision_side;  //0 for x, 1 for y
+  wire signed [10:0] collision_wall_pos_x;
+  wire signed [10:0] collision_wall_pos_y;
+  wire signed [ 4:0] new_ball_dx;
+  wire signed [ 4:0] new_ball_dy;
+  wire               score_increment;
 
-    //STATE MACHINE
-    always @ (posedge frame_tick) begin
-        if(btn_rst == 1'b1) begin
-            state <= STATE_IDLE;
-            //default values
-            ball_pos_x      <= BALL_START_X;
-            ball_pos_y      <= BALL_START_Y;
-            paddle_pos_x    <= PADDLE_START_X;
-            lives           <= START_LIVES;
+
+  //Game Elements
+  //ball
+  reg signed  [ 4:0] ball_dx = BALL_START_DX;
+  reg signed  [ 4:0] ball_dy = BALL_START_DY;
+
+  localparam DIAG_DIST = (BALL_RADIUS * 181) >> 8;  // 181/256 or about 1/sqrt(2)
+
+
+  brick_collision #(
+      .BALL_RADIUS(BALL_RADIUS),
+      .BRICK_WIDTH(BRICK_WIDTH),
+      .BRICK_HEIGHT(BRICK_HEIGHT),
+      .BRICK_GAP_X(BRICK_GAP_X),
+      .BRICK_GAP_Y(BRICK_GAP_Y),
+      .NUM_ROWS(NUM_ROWS),
+      .NUM_COLS(NUM_COLS),
+      .FIRST_ROW_Y(FIRST_ROW_Y),
+      .LAST_ROW_Y(LAST_ROW_Y),
+      .FIRST_COL_X(FIRST_COL_X),
+      .DIAG_DIST(DIAG_DIST)
+  ) brick_collision0 (
+      .ball_pos_x(ball_pos_x),
+      .ball_pos_y(ball_pos_y),
+      .ball_dx(ball_dx),
+      .ball_dy(ball_dy),
+      .brick_alive(brick_alive),
+      .collided(collided),
+      .brick_index(brick_index),
+      .collision_side(collision_side),
+      .collision_wall_pos_x(collision_wall_pos_x),
+      .collision_wall_pos_y(collision_wall_pos_y),
+      .new_ball_dx(new_ball_dx),
+      .new_ball_dy(new_ball_dy)
+  );
+
+  //STATE MACHINE
+  always @(posedge frame_tick) begin
+    if (btn_rst == 1'b1) begin
+      state        <= STATE_IDLE;
+      //default values
+      ball_pos_x   <= BALL_START_X;
+      ball_pos_y   <= BALL_START_Y;
+      paddle_pos_x <= PADDLE_START_X;
+      lives        <= START_LIVES;
+      score        <= 14'd0;
+      brick_alive  <= {(136) {1'b1}};
+    end
+
+    //On reset return to IDLE
+    case (state)
+
+      //IDLE - Waiting for go button - Screen shows "Press start" - 
+      STATE_IDLE: begin
+        if (btn_rst == 1'b1) begin
+          //default values
+          ball_pos_x   <= BALL_START_X;
+          ball_pos_y   <= BALL_START_Y;
+          paddle_pos_x <= PADDLE_START_X;
+          lives        <= START_LIVES;
+          score        <= 14'd0;
+          brick_alive  <= {(136) {1'b1}};
+        end else if (btn_go == 1'b1) begin
+          ball_pos_x   <= BALL_START_X;
+          ball_pos_y   <= BALL_START_Y;
+          paddle_pos_x <= PADDLE_START_X;
+          lives        <= START_LIVES;
+          score        <= 14'd0;
+          ball_dx      <= BALL_START_DX;
+          ball_dy      <= BALL_START_DY;
+          state        <= STATE_START;
+          brick_alive  <= {(136) {1'b1}};
+        end
+      end
+
+      //GAME START - Waiting for go button to be pressed - 
+      STATE_START: begin
+        if (btn_go == 1'b1) begin
+          state            <= STATE_PLAY;
+          brick_alive[126] <= 1'b0;
+          brick_alive[125] <= 1'b0;
+          brick_alive[109] <= 1'b0;
+        end
+      end
+
+      //GAME PLAY - Waiting for ball to hit the bottom - Manages ball and paddle and brick interactions 
+      //If lives remain - back to GAME START
+      //If lives out go to GAME OVER
+      STATE_PLAY: begin
+        //Move Paddle
+        if (btn_left ^ btn_right) begin
+          if (btn_left == 1'b1) begin
+            if (paddle_pos_x - PADDLE_DX - PADDLE_WIDTH < 0) paddle_pos_x <= PADDLE_WIDTH;
+            else paddle_pos_x <= paddle_pos_x - PADDLE_DX;
+          end else begin
+            if (paddle_pos_x + PADDLE_DX + PADDLE_WIDTH > 639) paddle_pos_x <= 639 - PADDLE_WIDTH;
+            else paddle_pos_x <= paddle_pos_x + PADDLE_DX;
+          end
         end
 
-        //On reset return to IDLE
-        case (state)
 
-            //IDLE - Waiting for go button - Screen shows "Press start" - 
-            STATE_IDLE: begin
-                if(btn_rst == 1'b1) begin
-                    //default values
-                    ball_pos_x      <= BALL_START_X;
-                    ball_pos_y      <= BALL_START_Y;
-                    paddle_pos_x    <= PADDLE_START_X;
-                    lives           <= START_LIVES;
-                end else if(btn_go == 1'b1) begin
-                    ball_pos_x      <= BALL_START_X;
-                    ball_pos_y      <= BALL_START_Y;
-                    paddle_pos_x    <= PADDLE_START_X;
-                    lives           <= START_LIVES;
-                    ball_dx         <= BALL_START_DX;
-                    ball_dy         <= BALL_START_DY;
-                    state           <= STATE_START;
-                end
-            end
+        //Check collisions with walls
+        if (ball_pos_x + ball_dx - BALL_RADIUS < 0 && ball_dx < 0) begin  //LEFT WALL
+          ball_pos_x <= -(ball_pos_x + ball_dx - BALL_RADIUS) + BALL_RADIUS;
+          ball_pos_y <= ball_pos_y + ball_dy;
+          ball_dx <= -ball_dx;
+        end else if (ball_pos_x + ball_dx + BALL_RADIUS >= 640 && ball_dx > 0) begin  //RIGHT WALL
+          ball_pos_x <= -((ball_pos_x + ball_dx + BALL_RADIUS) - 639) + 639 - BALL_RADIUS;
+          ball_pos_y <= ball_pos_y + ball_dy;
+          ball_dx <= -ball_dx;
+        end else if (ball_pos_y + ball_dy - BALL_RADIUS <= CEIL_Y && ball_dy < 0) begin  //TOP WALL
+          ball_pos_x <= ball_pos_x + ball_dx;
+          ball_pos_y <= -((ball_pos_y + ball_dy - BALL_RADIUS) - CEIL_Y) + BALL_RADIUS + CEIL_Y;
+          ball_dy <= -ball_dy;
+        end else if (ball_pos_y + ball_dy + BALL_RADIUS >= 480 && ball_dy > 0) begin  //BOTTOM WALL
+          //Ball dead
+          lives <= lives - 1;
+          state <= STATE_START;
+        end else if (ball_pos_y + ball_dy + BALL_RADIUS >= PADDLE_POS_Y && ball_pos_y + ball_dy + BALL_RADIUS <= PADDLE_POS_Y + PADDLE_HEIGHT && ball_pos_x + ball_dx >= paddle_pos_x - PADDLE_WIDTH && ball_pos_x + ball_dx <= paddle_pos_x + PADDLE_WIDTH && ball_dy > 0) begin //PADDLE TOP
+          ball_pos_x <= ball_pos_x + ball_dx;
+          ball_pos_y <= -((ball_pos_y + ball_dy + BALL_RADIUS) - PADDLE_POS_Y) - BALL_RADIUS + PADDLE_POS_Y;
+          ball_dy <= -ball_dy;
+        end else if (collided) begin
+          if (collision_side == 2'd0) begin  //LEFT OR RIGHT SIDE OF BRICK
+            brick_alive[brick_index] <= 1'b0;
+            ball_pos_x <= ball_dx>0 ? (-((ball_pos_x + ball_dx + BALL_RADIUS) - collision_wall_pos_x) - BALL_RADIUS + collision_wall_pos_x) : (-((ball_pos_x + ball_dx - BALL_RADIUS) - collision_wall_pos_x) + BALL_RADIUS + collision_wall_pos_x);
+            ball_dx <= new_ball_dx;
+            ball_pos_y <= ball_pos_y + ball_dy;
+          end else if (collision_side == 2'd1) begin  //TOP OR BOTTOM OF BRICK
+            brick_alive[brick_index] <= 1'b0;
+            ball_pos_x <= ball_pos_x + ball_dx;
+            ball_pos_y <= ball_dy > 0 ? (-((ball_pos_y + ball_dy + BALL_RADIUS) - collision_wall_pos_y) - BALL_RADIUS + collision_wall_pos_y) : (-((ball_pos_y + ball_dy - BALL_RADIUS) - collision_wall_pos_y) + BALL_RADIUS + collision_wall_pos_y);
+            ball_dy <= new_ball_dy;
+          end else if (collision_side == 2'd2) begin  //CORNER OF BRICK
+            brick_alive[brick_index] <= 1'b0;
+            ball_pos_x <= ball_dx > 0 ? (-((ball_pos_x + ball_dx + DIAG_DIST) - collision_wall_pos_x) - DIAG_DIST + collision_wall_pos_x) : (-((ball_pos_x + ball_dx - DIAG_DIST) - collision_wall_pos_x) + DIAG_DIST + collision_wall_pos_x);
+            ball_pos_y <= ball_dy > 0 ? (-((ball_pos_y + ball_dy + DIAG_DIST) - collision_wall_pos_y) - DIAG_DIST + collision_wall_pos_y) : (-((ball_pos_y + ball_dy - DIAG_DIST) - collision_wall_pos_y) + DIAG_DIST + collision_wall_pos_y);
+            ball_dx <= new_ball_dx;
+            ball_dy <= new_ball_dy;
+          end
+          score <= score + 1;
+          if (score + 1 == 9999) state <= STATE_OVER;
+        end else begin
+          ball_pos_x <= ball_pos_x + ball_dx;
+          ball_pos_y <= ball_pos_y + ball_dy;
+        end
 
-            //GAME START - Waiting for go button to be pressed - 
-            STATE_START: begin
-                if(btn_go == 1'b1) begin
-                    state           <= STATE_PLAY;
-                end
-            end
-            
-            //GAME PLAY - Waiting for ball to hit the bottom - Manages ball and paddle and brick interactions 
-                //If lives remain - back to GAME START
-                //If lives out go to GAME OVER
-            STATE_PLAY: begin
 
-                //Move Paddle
-                if(btn_left ^ btn_right)begin
-                    if(btn_left == 1'b1)begin
-                        if (paddle_pos_x - PADDLE_DX - PADDLE_WIDTH < 0) paddle_pos_x <= PADDLE_WIDTH;
-                        else paddle_pos_x <= paddle_pos_x - PADDLE_DX;
-                    end else begin
-                        if (paddle_pos_x + PADDLE_DX + PADDLE_WIDTH > 639) paddle_pos_x <= 639-PADDLE_WIDTH;
-                        else paddle_pos_x <= paddle_pos_x + PADDLE_DX;
-                    end
-                end
+      end
 
+      //GAME OVER - Show game over for 5 sec and then back to IDLE
+      STATE_OVER: begin
 
-                //Check collisions with walls
-                if (ball_pos_x + ball_dx - BALL_RADIUS < 0 && ball_dx < 0) begin //LEFT WALL
-                    ball_pos_x <= -(ball_pos_x + ball_dx);
-                    ball_dx <= -ball_dx;
-                end else if (ball_pos_x + ball_dx + BALL_RADIUS >= 640 && ball_dx > 0) begin //RIGHT WALL
-                    ball_pos_x <= -((ball_pos_x + ball_dx + BALL_RADIUS) - 639) + 639 - BALL_RADIUS;
-                    ball_dx <= -ball_dx;
-                end else ball_pos_x <= ball_pos_x + ball_dx;
+      end
 
-                if (ball_pos_y + ball_dy - BALL_RADIUS < 0 && ball_dy < 0) begin   //TOP WALL
-                    ball_pos_y <= -(ball_pos_y + ball_dy); 
-                    ball_dy <= -ball_dy;
-                end else if (ball_pos_y + ball_dy + BALL_RADIUS >= 480  && ball_dy > 0) begin //BOTTOM WALL
-                    //Ball dead
-                    lives <= lives - 1;
-                    state <= STATE_START;
-                end else if (ball_pos_y + ball_dy + BALL_RADIUS >= PADDLE_POS_Y && ball_pos_y + ball_dy + BALL_RADIUS <= PADDLE_POS_Y + PADDLE_HEIGHT && ball_pos_x + ball_dx >= paddle_pos_x - PADDLE_WIDTH && ball_pos_x + ball_dx <= paddle_pos_x + PADDLE_WIDTH && ball_dy > 0) begin
-                    ball_pos_y <= -((ball_pos_y + ball_dy + BALL_RADIUS) - PADDLE_POS_Y) - BALL_RADIUS + PADDLE_POS_Y;
-                    ball_dy <= -ball_dy;    
-                end else ball_pos_y <= ball_pos_y + ball_dy;
-            end
-            
-            //GAME OVER - Show game over for 5 sec and then back to IDLE
-            STATE_OVER: begin
-            end
-
-            default: state <= STATE_IDLE;
-        endcase
-    end
+      default: state <= STATE_IDLE;
+    endcase
+  end
 
 endmodule
