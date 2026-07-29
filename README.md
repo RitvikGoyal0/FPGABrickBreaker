@@ -13,7 +13,7 @@ This project generates the video signal and game logic for Brick Breaker directl
 - **Verilog** — all game logic and video timing hardware modules
 - **iCE40 FPGA toolchain** — [Apio](https://apio-doc.readthedocs.io/) wrapping Yosys (synthesis), nextpnr (place & route), and IceStorm (bitstream generation)
 - **Python** — `vga_sim.py` with `pyvcd`/`vcdvcd` to inspect simulated VGA output from waveform dumps
-- **Icarus Verilog (implied by `main_tb.v`)** — for running the testbench in simulation before synthesizing to hardware
+- **Icarus Verilog** — for running the testbench in simulation before synthesizing to hardware
 
 ## Module Hierarchy
  
