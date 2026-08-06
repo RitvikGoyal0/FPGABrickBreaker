@@ -1,17 +1,24 @@
 #Oscillator
 set_io              clk     21
 
+#LEDs
+set_io              led[0]  99
+set_io              led[1]  98
+set_io              led[2]  97
+set_io              led[3]  96
+set_io              rst_led 95
+
 
 #PMOD I/O
 set_io  -pullup yes btn_left    112
 set_io  -pullup yes btn_right   113
 set_io  -pullup yes btn_go      114
 set_io  -pullup yes btn_rst     115
-set_io  -pullup yes hsync       61
-set_io  -pullup yes vsync       62
-set_io  -pullup yes r[0]        63
-set_io  -pullup yes r[1]        64
-set_io  -pullup yes g[0]        78
+set_io  -pullup yes hsync       91
+set_io  -pullup yes vsync       81
+set_io  -pullup yes r[0]        87
+set_io  -pullup yes r[1]        78
+set_io  -pullup yes g[0]        88
 set_io  -pullup yes g[1]        79
-set_io  -pullup yes b[0]        80
-set_io  -pullup yes b[1]        81
+set_io  -pullup yes b[0]        90
+set_io  -pullup yes b[1]        80

@@ -1,4 +1,6 @@
 module directions_bitmap (
+    input       vga_clk,
+    input       r_en,
     input [9:0] pixel_x,
     input [8:0] pixel_y,
 
@@ -9,7 +11,7 @@ module directions_bitmap (
   localparam DIRECTIONS_W = 64 * SCALE;
   localparam DIRECTIONS_H = 8 * SCALE;
   localparam DIRECTIONS_X = (640 - DIRECTIONS_W) / 2;
-  localparam DIRECTIONS_Y = (480 - DIRECTIONS_H) / 2;
+  localparam DIRECTIONS_Y = ((480 - DIRECTIONS_H) / 2)+120;
 
   wire in_directions_box = (pixel_x >= DIRECTIONS_X) && (pixel_x < DIRECTIONS_X + DIRECTIONS_W) && (pixel_y >= DIRECTIONS_Y) && (pixel_y < DIRECTIONS_Y + DIRECTIONS_H);
 
@@ -19,6 +21,8 @@ module directions_bitmap (
 
 
   directions_rom directions_bitmap (
+      .vga_clk(vga_clk),
+      .r_en(r_en),
       .row(directions_row),
       .row_bits(directions_row_bits)
   );

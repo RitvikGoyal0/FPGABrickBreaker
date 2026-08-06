@@ -12,21 +12,35 @@ module main (
     output wire vsync,
     output wire [1:0] r,
     output wire [1:0] g,
-    output wire [1:0] b
+    output wire [1:0] b,
+
+    output wire [3:0]   led,
+    output wire         rst_led
 );
   //STATE
   reg  [1:0] state;
+
+reg [23:0] clk_alive_counter = 0;
+always @(posedge vga_clk) clk_alive_counter <= clk_alive_counter + 1;
+assign led[0] = clk_alive_counter[23];  // toggles ~once per second at 25MHz, ~once every 2s at 12MHz
+//   assign led = (state == 2'b00) ? 4'b0001 : (state == 2'b01) ? 4'b0010 : (state == 2'b10) ? 4'b0100 : 4'b1000;
+  assign rst_led = btn_rst;
+
+  wire rst_sig  = ~btn_rst;
+  wire go_sig   = ~btn_go;
+  wire left_sig = ~btn_left;
+  wire right_sig= ~btn_right;
 
   //VGA CLOCK GENERATOR
   wire       vga_clk;
 
   //Create vga clock signal of 25.125 MHz
-  // pll clk_multiplier (
-  //     .inp_clk(clk),
-  //     .out_clk(vga_clk)
-  // );
+  pll clk_multiplier (
+      .inp_clk(clk),
+      .out_clk(vga_clk)
+  );
 
-  assign vga_clk = clk;  //Simulation clock
+//   assign vga_clk = clk;  //Simulation clock
 
   //VGA TIMING GENERATOR
 
@@ -123,10 +137,10 @@ module main (
       .FIRST_COL_X(FIRST_COL_X)
   ) game (
       .frame_tick(frame_tick),
-      .btn_go(btn_go),
-      .btn_rst(btn_rst),
-      .btn_left(btn_left),
-      .btn_right(btn_right),
+      .btn_go(go_sig),
+      .btn_rst(rst_sig),
+      .btn_left(left_sig),
+      .btn_right(right_sig),
       .ball_pos_x(ball_pos_x),
       .ball_pos_y(ball_pos_y),
       .paddle_pos_x(paddle_pos_x),

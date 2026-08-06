@@ -1,4 +1,6 @@
 module title_bitmap (
+    input       vga_clk,
+    input       r_en,
     input [9:0] pixel_x,
     input [8:0] pixel_y,
 
@@ -19,6 +21,8 @@ module title_bitmap (
 
 
   title_rom title_bitmap (
+      .vga_clk(vga_clk),
+      .r_en(r_en),
       .row(title_row),
       .row_bits(title_row_bits)
   );

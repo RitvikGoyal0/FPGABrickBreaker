@@ -1,7 +1,9 @@
 module chars_rom (
+    input        vga_clk,
+    input       r_en,
     input  [3:0] char,    //0-9 and 10 for heart
     input  [2:0] row,     // 0-7
-    output [7:0] row_bits // 8 bits per row
+    output reg [7:0] row_bits // 8 bits per row
 );
 
   reg [63:0] rom[0:10];
@@ -20,6 +22,9 @@ module chars_rom (
     rom[10] = 64'h10387cfefeee4400;
   end
 
-  assign row_bits = rom[char][(row*8+7)-:8];
+  always @(posedge vga_clk)
+    if(r_en == 1'b1) begin
+      row_bits <= rom[char][(row*8+7)-:8];
+    end
 
 endmodule

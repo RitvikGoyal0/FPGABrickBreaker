@@ -29,12 +29,11 @@ module vga (
   assign hsync = (h_count_value < 96) ? 1'b1 : 1'b0;
   assign vsync = (v_count_value < 2) ? 1'b1 : 1'b0;
 
-  always @(posedge vga_clk) begin
-    if (frame_tick == 1'b1) frame_tick <= 1'b0;
-  end
+  reg vsync_prev;
 
-  always @(posedge vsync) begin
-    frame_tick <= 1'b1;
+  always @(posedge vga_clk) begin
+      vsync_prev <= vsync;
+      frame_tick <= (vsync && !vsync_prev);  // pulses exactly one vga_clk cycle on vsync's rising edge
   end
 
   assign active = (h_count_value < 784 && h_count_value > 143 && v_count_value < 515 && v_count_value>34);

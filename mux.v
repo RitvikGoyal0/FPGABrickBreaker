@@ -74,15 +74,18 @@ module mux #(
   localparam BRICK_COLOR_R = 2'b11;
   localparam BRICK_COLOR_B = 2'b11;
 
-  localparam BKGRND_COLOR_R = 2'b00;
-  localparam BKGRND_COLOR_G = 2'b00;
-  localparam BKGRND_COLOR_B = 2'b00;
+  localparam BKGRND_COLOR_R = 2'b11;
+  localparam BKGRND_COLOR_G = 2'b11;
+  localparam BKGRND_COLOR_B = 2'b11;
 
 
   //TITLE SCREEN BITMAP PLACEMENT (128x46, centered on a 640x480 screen)
   wire title_pixel_lit;
+  reg  title_r_en;
 
   title_bitmap title_bitmap0 (
+      .r_en(title_r_en),
+      .vga_clk(vga_clk),
       .pixel_x(pixel_x),
       .pixel_y(pixel_y),
       .title_pixel_lit(title_pixel_lit)
@@ -90,8 +93,11 @@ module mux #(
 
   //DIRECTIONS BITMAP PLACEMENT (128x46, centered on a 640x480 screen)
   wire directions_pixel_lit;
+  reg  dir_r_en;
 
   directions_bitmap directions_bitmap0 (
+      .r_en(dir_r_en),
+      .vga_clk(vga_clk),
       .pixel_x(pixel_x),
       .pixel_y(pixel_y),
       .directions_pixel_lit(directions_pixel_lit)
@@ -100,10 +106,13 @@ module mux #(
 
   //LIVES DISPLAY top-left
   wire heart_pixel_lit;
+  reg  lives_r_en;
 
   lives_bitmap #(
       .INFO_HEIGHT(INFO_HEIGHT)
   ) lives_bitmap0 (
+      .r_en(lives_r_en),
+      .vga_clk(vga_clk),
       .pixel_x(pixel_x),
       .pixel_y(pixel_y),
       .lives(lives),
@@ -112,10 +121,13 @@ module mux #(
 
   //SCORE DISPLAY top-right
   wire score_pixel_lit;
+  reg  score_r_en;
 
   score_bitmap #(
       .INFO_HEIGHT(INFO_HEIGHT)
   ) score_bitmap0 (
+      .r_en(score_r_en),
+      .vga_clk(vga_clk),
       .pixel_x(pixel_x),
       .pixel_y(pixel_y),
       .score(score),
@@ -160,6 +172,7 @@ module mux #(
       //IDLE - Waiting for go button - Screen shows "Press start" - 
       STATE_IDLE: begin
         if (active) begin
+          title_r_en <= 1'b1;
           if (title_pixel_lit) begin
             r <= TITLE_COLOR_R;
             g <= TITLE_COLOR_G;
@@ -171,7 +184,7 @@ module mux #(
           end
         end else begin
           r <= 2'b00;
-          g <= 2'b00;
+          g <= 2'b11;
           b <= 2'b00;
         end
       end
@@ -179,6 +192,9 @@ module mux #(
       //GAME START - Waiting for go button to be pressed - 
       STATE_START: begin
         if (active) begin
+          dir_r_en <= 1'b1;
+          lives_r_en <= 1'b1;
+          score_r_en <= 1'b1;
           if (dist_sq <= (BALL_RADIUS * BALL_RADIUS)) begin  //BALL
             r <= BALL_COLOR_R;
             g <= BALL_COLOR_G;
@@ -215,7 +231,7 @@ module mux #(
         end else begin
           r <= 2'b00;
           g <= 2'b00;
-          b <= 2'b00;
+          b <= 2'b11;
         end
       end
 
@@ -224,6 +240,9 @@ module mux #(
       //If lives out go to GAME OVER
       STATE_PLAY: begin
         if (active) begin
+          dir_r_en <= 1'b1;
+          lives_r_en <= 1'b1;
+          score_r_en <= 1'b1;
           if (dist_sq <= (BALL_RADIUS * BALL_RADIUS)) begin
             r <= BALL_COLOR_R;
             g <= BALL_COLOR_G;
@@ -254,7 +273,7 @@ module mux #(
             b <= BKGRND_COLOR_B;
           end
         end else begin
-          r <= 2'b00;
+          r <= 2'b11;
           g <= 2'b00;
           b <= 2'b00;
         end

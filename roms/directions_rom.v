@@ -1,6 +1,8 @@
 module directions_rom (
+    input        vga_clk,
+    input        r_en,
     input  [3:0] row,     // 0-7
-    output [63:0] row_bits
+    output reg [63:0] row_bits
 );
 
   reg [63:0] rom[0:7];
@@ -16,6 +18,9 @@ module directions_rom (
     rom[7] = {8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00, 8'h00};
   end
 
-  assign row_bits = rom[row];
+  always @(posedge vga_clk)
+    if (r_en == 1'b1) begin
+      row_bits <= rom[row];
+    end
 
 endmodule

@@ -6,28 +6,48 @@ module game_logic #(
     parameter STATE_OVER  = 2'd3,
 
     //DEFAULT VALUES
-    parameter          BALL_START_X,
-    parameter          BALL_START_Y,
-    parameter          BALL_START_DX,
-    parameter          BALL_START_DY,
-    parameter          PADDLE_START_X,
-    parameter          PADDLE_POS_Y,
-    parameter          START_LIVES,
-    parameter          BALL_RADIUS,
-    parameter          PADDLE_WIDTH,
-    parameter          PADDLE_HEIGHT,
-    parameter          PADDLE_DX
-)(
-    input           frame_tick,
-    input           btn_left,
-    input           btn_right,
-    input           btn_rst,
-    input           btn_go,
-    
-    output reg signed [10:0]   ball_pos_x,
-    output reg signed [9:0]    ball_pos_y,
-    output reg signed [10:0]   paddle_pos_x,
-    output reg        [1:0]    state
+    parameter signed BALL_START_X   = 11'sd320,
+    parameter signed BALL_START_Y   = 10'sd240,
+    parameter signed BALL_START_DX  = 4'sd3,
+    parameter signed BALL_START_DY  = 4'sd3,
+    parameter signed PADDLE_START_X = 11'sd320,
+    parameter signed PADDLE_POS_Y   = 10'sd260,
+    parameter        START_LIVES    = 2'd3,
+    parameter signed BALL_RADIUS    = 3'sd6,
+    parameter signed PADDLE_WIDTH   = 6'sd30,
+    parameter signed PADDLE_HEIGHT  = 5'sd6,
+    parameter        PADDLE_DX      = 4'd3,
+
+    //Screen values
+    parameter signed INFO_HEIGHT = 6'd50,
+    parameter signed CEIL_Y      = INFO_HEIGHT + 5,
+
+    //Brick Values
+    parameter BRICK_WIDTH  = 32,
+    parameter BRICK_HEIGHT = 12,
+    parameter BRICK_GAP_X  = 6,
+    parameter BRICK_GAP_Y  = 4,
+    parameter NUM_ROWS     = 8,
+    parameter NUM_COLS     = (640 + 6) / (32 + 6),
+    parameter FIRST_ROW_Y  = 100,
+    parameter LAST_ROW_Y   = (100 + 8 * 16),
+    parameter FIRST_COL_X  = 0
+) (
+    input frame_tick,
+    input btn_left,
+    input btn_right,
+    input btn_rst,
+    input btn_go,
+
+    output reg signed [ 10:0] ball_pos_x,
+    output reg signed [  9:0] ball_pos_y,
+    output reg signed [ 10:0] paddle_pos_x,
+    output reg        [  1:0] state,
+    output reg        [135:0] brick_alive,
+
+    //lives
+    output reg [ 1:0] lives,
+    output reg [13:0] score
 );
 
 
@@ -159,7 +179,11 @@ module game_logic #(
         end else if (ball_pos_y + ball_dy + BALL_RADIUS >= 480 && ball_dy > 0) begin  //BOTTOM WALL
           //Ball dead
           lives <= lives - 1;
-          state <= STATE_START;
+          if(lives - 1 > 0) begin
+            state <= STATE_START;
+          end else begin
+            state <= STATE_OVER;
+          end
         end else if (ball_pos_y + ball_dy + BALL_RADIUS >= PADDLE_POS_Y && ball_pos_y + ball_dy + BALL_RADIUS <= PADDLE_POS_Y + PADDLE_HEIGHT && ball_pos_x + ball_dx >= paddle_pos_x - PADDLE_WIDTH && ball_pos_x + ball_dx <= paddle_pos_x + PADDLE_WIDTH && ball_dy > 0) begin //PADDLE TOP
           ball_pos_x <= ball_pos_x + ball_dx;
           ball_pos_y <= -((ball_pos_y + ball_dy + BALL_RADIUS) - PADDLE_POS_Y) - BALL_RADIUS + PADDLE_POS_Y;

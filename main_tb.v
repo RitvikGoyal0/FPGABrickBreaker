@@ -45,10 +45,6 @@ module main_tb ();
     //dumpfile("main_tb.vcd");
     $dumpvars(1, main_tb);
 
-    // Hold reset briefly
-    btn_rst = 1'b1;
-    #(FRAME_NS);
-    btn_rst = 1'b0;
 
     // Sit in IDLE a couple frames, then press GO -> STATE_START
     // #(FRAME_NS*3);

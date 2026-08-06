@@ -1,6 +1,8 @@
 module lives_bitmap #(
     parameter INFO_HEIGHT = 6'd50
 ) (
+    input       vga_clk,
+    input       r_en,
     input [9:0] pixel_x,
     input [8:0] pixel_y,
     input [1:0] lives,
@@ -33,6 +35,8 @@ module lives_bitmap #(
   wire [7:0] heart_row_bits;
 
   chars_rom heart_font (
+      .vga_clk(vga_clk),
+      .r_en(r_en),
       .char    (4'd10),          //heart glyph
       .row     (heart_row),
       .row_bits(heart_row_bits)
