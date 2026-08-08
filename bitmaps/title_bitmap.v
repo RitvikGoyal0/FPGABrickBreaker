@@ -1,13 +1,12 @@
 module title_bitmap (
     input       vga_clk,
-    input       r_en,
     input [9:0] pixel_x,
     input [8:0] pixel_y,
 
     output title_pixel_lit
 );
 
-  localparam SCALE = 3;  //Can change to a multiple of 2 to save logic cells later if needed
+  localparam SCALE = 2;  //Can change to a multiple of 2 to save logic cells later if needed
   localparam TITLE_W = 128 * SCALE;
   localparam TITLE_H = 46 * SCALE;
   localparam TITLE_X = (640 - TITLE_W) / 2;
@@ -22,7 +21,6 @@ module title_bitmap (
 
   title_rom title_bitmap (
       .vga_clk(vga_clk),
-      .r_en(r_en),
       .row(title_row),
       .row_bits(title_row_bits)
   );

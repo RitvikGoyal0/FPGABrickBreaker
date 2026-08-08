@@ -20,12 +20,6 @@ module main (
   //STATE
   reg  [1:0] state;
 
-reg [23:0] clk_alive_counter = 0;
-always @(posedge vga_clk) clk_alive_counter <= clk_alive_counter + 1;
-assign led[0] = clk_alive_counter[23];  // toggles ~once per second at 25MHz, ~once every 2s at 12MHz
-//   assign led = (state == 2'b00) ? 4'b0001 : (state == 2'b01) ? 4'b0010 : (state == 2'b10) ? 4'b0100 : 4'b1000;
-  assign rst_led = btn_rst;
-
   wire rst_sig  = ~btn_rst;
   wire go_sig   = ~btn_go;
   wire left_sig = ~btn_left;
@@ -35,12 +29,18 @@ assign led[0] = clk_alive_counter[23];  // toggles ~once per second at 25MHz, ~o
   wire       vga_clk;
 
   //Create vga clock signal of 25.125 MHz
-  pll clk_multiplier (
-      .inp_clk(clk),
-      .out_clk(vga_clk)
-  );
+//   pll clk_multiplier (
+//       .inp_clk(clk),
+//       .out_clk(vga_clk)
+//   );
 
-//   assign vga_clk = clk;  //Simulation clock
+   assign vga_clk = clk;  //Simulation clock
+
+  reg [23:0] clk_alive_counter = 0;
+  always @(posedge vga_clk) clk_alive_counter <= clk_alive_counter + 1;
+  assign led[0] = clk_alive_counter[23];  // toggles ~once per second at 25MHz, ~once every 2s at 12MHz
+  //   assign led = (state == 2'b00) ? 4'b0001 : (state == 2'b01) ? 4'b0010 : (state == 2'b10) ? 4'b0100 : 4'b1000;
+  assign rst_led = btn_rst;
 
   //VGA TIMING GENERATOR
 
@@ -66,7 +66,7 @@ assign led[0] = clk_alive_counter[23];  // toggles ~once per second at 25MHz, ~o
   wire signed [  9:0] ball_pos_y;
   wire signed [ 10:0] paddle_pos_x;
 
-  wire        [135:0] brick_alive;
+  wire        [79:0] brick_alive;
 
   wire        [  1:0] lives;
   wire        [ 13:0] score;
@@ -95,11 +95,11 @@ assign led[0] = clk_alive_counter[23];  // toggles ~once per second at 25MHz, ~o
 
   //BRICK DEFAULT VALUES
   localparam BRICK_WIDTH = 32;
-  localparam BRICK_HEIGHT = 12;
-  localparam BRICK_GAP_X = 6;
-  localparam BRICK_GAP_Y = 4;
+  localparam BRICK_HEIGHT = 16;
+  localparam BRICK_GAP_X = 0;
+  localparam BRICK_GAP_Y = 0;
 
-  localparam NUM_ROWS = 8;
+  localparam NUM_ROWS = 4;
   localparam NUM_COLS = (640 + BRICK_GAP_X) / (BRICK_WIDTH + BRICK_GAP_X);
   localparam FIRST_ROW_Y = 100;
   localparam LAST_ROW_Y = (100 + NUM_ROWS * 16);
@@ -108,7 +108,7 @@ assign led[0] = clk_alive_counter[23];  // toggles ~once per second at 25MHz, ~o
 
 
   //GAME LOGIC
-  game_logic #(
+  game_logic_worse #(
       .STATE_IDLE(STATE_IDLE),
       .STATE_START(STATE_START),
       .STATE_PLAY(STATE_PLAY),

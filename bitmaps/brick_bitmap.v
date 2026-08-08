@@ -12,7 +12,7 @@ module brick_bitmap #(
 ) (
     input [  9:0] pixel_x,
     input [  8:0] pixel_y,
-    input [135:0] brick_alive,
+    input [79:0]  brick_alive,
 
     output brick_pixel_lit
 );

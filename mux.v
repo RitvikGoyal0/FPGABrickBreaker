@@ -35,7 +35,7 @@ module mux #(
     input signed [  9:0] ball_pos_y,
     input signed [ 10:0] paddle_pos_x,
     input        [  1:0] state,
-    input        [135:0] brick_alive,
+    input        [79:0]  brick_alive,
 
     input [ 1:0] lives,
     input [13:0] score,
@@ -74,65 +74,57 @@ module mux #(
   localparam BRICK_COLOR_R = 2'b11;
   localparam BRICK_COLOR_B = 2'b11;
 
-  localparam BKGRND_COLOR_R = 2'b11;
-  localparam BKGRND_COLOR_G = 2'b11;
-  localparam BKGRND_COLOR_B = 2'b11;
+  localparam BKGRND_COLOR_R = 2'b00;
+  localparam BKGRND_COLOR_G = 2'b00;
+  localparam BKGRND_COLOR_B = 2'b00;
 
 
   //TITLE SCREEN BITMAP PLACEMENT (128x46, centered on a 640x480 screen)
-  wire title_pixel_lit;
-  reg  title_r_en;
+  // wire title_pixel_lit;
 
-  title_bitmap title_bitmap0 (
-      .r_en(title_r_en),
-      .vga_clk(vga_clk),
-      .pixel_x(pixel_x),
-      .pixel_y(pixel_y),
-      .title_pixel_lit(title_pixel_lit)
-  );
+  // title_bitmap title_bitmap0 (
+  //     .vga_clk(vga_clk),
+  //     .pixel_x(pixel_x),
+  //     .pixel_y(pixel_y),
+  //     .title_pixel_lit(title_pixel_lit)
+  // );
 
   //DIRECTIONS BITMAP PLACEMENT (128x46, centered on a 640x480 screen)
-  wire directions_pixel_lit;
-  reg  dir_r_en;
+  // wire directions_pixel_lit;
 
-  directions_bitmap directions_bitmap0 (
-      .r_en(dir_r_en),
-      .vga_clk(vga_clk),
-      .pixel_x(pixel_x),
-      .pixel_y(pixel_y),
-      .directions_pixel_lit(directions_pixel_lit)
-  );
+  // directions_bitmap directions_bitmap0 (
+  //     .vga_clk(vga_clk),
+  //     .pixel_x(pixel_x),
+  //     .pixel_y(pixel_y),
+  //     .directions_pixel_lit(directions_pixel_lit)
+  // );
 
 
-  //LIVES DISPLAY top-left
-  wire heart_pixel_lit;
-  reg  lives_r_en;
+  // //LIVES DISPLAY top-left
+  // wire heart_pixel_lit;
 
-  lives_bitmap #(
-      .INFO_HEIGHT(INFO_HEIGHT)
-  ) lives_bitmap0 (
-      .r_en(lives_r_en),
-      .vga_clk(vga_clk),
-      .pixel_x(pixel_x),
-      .pixel_y(pixel_y),
-      .lives(lives),
-      .heart_pixel_lit(heart_pixel_lit)
-  );
+  // lives_bitmap #(
+  //     .INFO_HEIGHT(INFO_HEIGHT)
+  // ) lives_bitmap0 (
+  //     .vga_clk(vga_clk),
+  //     .pixel_x(pixel_x),
+  //     .pixel_y(pixel_y),
+  //     .lives(lives),
+  //     .heart_pixel_lit(heart_pixel_lit)
+  // );
 
-  //SCORE DISPLAY top-right
-  wire score_pixel_lit;
-  reg  score_r_en;
+  // //SCORE DISPLAY top-right
+  // wire score_pixel_lit;
 
-  score_bitmap #(
-      .INFO_HEIGHT(INFO_HEIGHT)
-  ) score_bitmap0 (
-      .r_en(score_r_en),
-      .vga_clk(vga_clk),
-      .pixel_x(pixel_x),
-      .pixel_y(pixel_y),
-      .score(score),
-      .score_pixel_lit(score_pixel_lit)
-  );
+  // score_bitmap #(
+  //     .INFO_HEIGHT(INFO_HEIGHT)
+  // ) score_bitmap0 (
+  //     .vga_clk(vga_clk),
+  //     .pixel_x(pixel_x),
+  //     .pixel_y(pixel_y),
+  //     .score(score),
+  //     .score_pixel_lit(score_pixel_lit)
+  // );
 
   //BRICKS DISPLAY
   wire brick_pixel_lit;
@@ -172,16 +164,15 @@ module mux #(
       //IDLE - Waiting for go button - Screen shows "Press start" - 
       STATE_IDLE: begin
         if (active) begin
-          title_r_en <= 1'b1;
-          if (title_pixel_lit) begin
-            r <= TITLE_COLOR_R;
-            g <= TITLE_COLOR_G;
-            b <= TITLE_COLOR_B;
-          end else begin
-            r <= BKGRND_COLOR_R;
-            g <= BKGRND_COLOR_G;
-            b <= BKGRND_COLOR_B;
-          end
+          // if (title_pixel_lit) begin
+          //   r <= TITLE_COLOR_R;
+          //   g <= TITLE_COLOR_G;
+          //   b <= TITLE_COLOR_B;
+          // end else begin
+          //   r <= BKGRND_COLOR_R;
+          //   g <= BKGRND_COLOR_G;
+          //   b <= BKGRND_COLOR_B;
+          // end
         end else begin
           r <= 2'b00;
           g <= 2'b11;
@@ -192,9 +183,6 @@ module mux #(
       //GAME START - Waiting for go button to be pressed - 
       STATE_START: begin
         if (active) begin
-          dir_r_en <= 1'b1;
-          lives_r_en <= 1'b1;
-          score_r_en <= 1'b1;
           if (dist_sq <= (BALL_RADIUS * BALL_RADIUS)) begin  //BALL
             r <= BALL_COLOR_R;
             g <= BALL_COLOR_G;
@@ -207,23 +195,27 @@ module mux #(
             r <= BORDER_COLOR_R;
             g <= BORDER_COLOR_G;
             b <= BORDER_COLOR_B;
-          end else if (heart_pixel_lit) begin
-            r <= HEART_COLOR_R;
-            g <= HEART_COLOR_G;
-            b <= HEART_COLOR_B;
-          end else if (score_pixel_lit) begin
-            r <= SCORE_COLOR_R;
-            g <= SCORE_COLOR_G;
-            b <= SCORE_COLOR_B;
-          end else if (brick_pixel_lit) begin
+          end 
+          // else if (heart_pixel_lit) begin
+          //   r <= HEART_COLOR_R;
+          //   g <= HEART_COLOR_G;
+          //   b <= HEART_COLOR_B;
+          // end else if (score_pixel_lit) begin
+          //   r <= SCORE_COLOR_R;
+          //   g <= SCORE_COLOR_G;
+          //   b <= SCORE_COLOR_B;
+          // end 
+          else if (brick_pixel_lit) begin
             r <= BRICK_COLOR_R;
             g <= BRICK_COLOR_G;
             b <= BRICK_COLOR_B;
-          end else if (directions_pixel_lit) begin
-            r <= TITLE_COLOR_R;
-            g <= TITLE_COLOR_G;
-            b <= TITLE_COLOR_B;
-          end else begin
+          end 
+          // else if (directions_pixel_lit) begin
+          //   r <= TITLE_COLOR_R;
+          //   g <= TITLE_COLOR_G;
+          //   b <= TITLE_COLOR_B;
+          // end 
+          else begin
             r <= BKGRND_COLOR_R;
             g <= BKGRND_COLOR_G;
             b <= BKGRND_COLOR_B;
@@ -240,9 +232,6 @@ module mux #(
       //If lives out go to GAME OVER
       STATE_PLAY: begin
         if (active) begin
-          dir_r_en <= 1'b1;
-          lives_r_en <= 1'b1;
-          score_r_en <= 1'b1;
           if (dist_sq <= (BALL_RADIUS * BALL_RADIUS)) begin
             r <= BALL_COLOR_R;
             g <= BALL_COLOR_G;
@@ -255,15 +244,17 @@ module mux #(
             r <= BORDER_COLOR_R;
             g <= BORDER_COLOR_G;
             b <= BORDER_COLOR_B;
-          end else if (heart_pixel_lit) begin
-            r <= HEART_COLOR_R;
-            g <= HEART_COLOR_G;
-            b <= HEART_COLOR_B;
-          end else if (score_pixel_lit) begin
-            r <= SCORE_COLOR_R;
-            g <= SCORE_COLOR_G;
-            b <= SCORE_COLOR_B;
-          end else if (brick_pixel_lit) begin
+          end 
+          // else if (heart_pixel_lit) begin
+          //   r <= HEART_COLOR_R;
+          //   g <= HEART_COLOR_G;
+          //   b <= HEART_COLOR_B;
+          // end else if (score_pixel_lit) begin
+          //   r <= SCORE_COLOR_R;
+          //   g <= SCORE_COLOR_G;
+          //   b <= SCORE_COLOR_B;
+          // end 
+          else if (brick_pixel_lit) begin
             r <= BRICK_COLOR_R;
             g <= BRICK_COLOR_G;
             b <= BRICK_COLOR_B;

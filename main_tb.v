@@ -45,22 +45,26 @@ module main_tb ();
     //dumpfile("main_tb.vcd");
     $dumpvars(1, main_tb);
 
+    // Hold reset briefly
+    btn_rst = 1'b0;
+    #(FRAME_NS);
+    btn_rst = 1'b1;
 
     // Sit in IDLE a couple frames, then press GO -> STATE_START
     // #(FRAME_NS*3);
-    btn_go  = 1'b1;
+    btn_go  = 1'b0;
     #(FRAME_NS);  // hold across at least one frame_tick edge
-    btn_go = 1'b0;
+    btn_go = 1'b1;
 
     // Press GO again -> STATE_PLAY
-    btn_go = 1'b1;
-    #(FRAME_NS);
     btn_go = 1'b0;
+    #(FRAME_NS);
+    btn_go = 1'b1;
 
     // Exercise paddle movement
     btn_right = 1'b0;
     #(FRAME_NS * 2);
-    btn_right = 1'b0;
+    btn_right = 1'b1;
 
     // Let the ball bounce around and watch collisions in the log/vcd
     #(FRAME_NS * NUM_FRAMES);

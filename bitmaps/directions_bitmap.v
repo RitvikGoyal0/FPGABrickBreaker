@@ -1,6 +1,5 @@
 module directions_bitmap (
     input       vga_clk,
-    input       r_en,
     input [9:0] pixel_x,
     input [8:0] pixel_y,
 
@@ -22,7 +21,6 @@ module directions_bitmap (
 
   directions_rom directions_bitmap (
       .vga_clk(vga_clk),
-      .r_en(r_en),
       .row(directions_row),
       .row_bits(directions_row_bits)
   );

@@ -2,7 +2,6 @@ module score_bitmap #(
     parameter INFO_HEIGHT = 6'd50
 ) (
     input        vga_clk,
-    input       r_en,
     input [ 9:0] pixel_x,
     input [ 8:0] pixel_y,
     input [13:0] score,
@@ -53,7 +52,6 @@ module score_bitmap #(
 
   chars_rom score_font (
       .vga_clk(vga_clk),
-      .r_en(r_en),
       .char    (score_char),     //score glyph
       .row     (score_row),
       .row_bits(score_row_bits)
