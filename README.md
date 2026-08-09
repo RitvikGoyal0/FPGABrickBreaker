@@ -13,6 +13,13 @@ This project generates the video signal and game logic for Brick Breaker directl
 - **Python** — `vga_sim.py` with `pyvcd`/`vcdvcd` to inspect simulated VGA output from waveform dumps
 - **Icarus Verilog** — for running the testbench in simulation before synthesizing to hardware
 
+## Hardware
+
+- iCE40HX1K - 1,280 Logic Cells, PMOD Connectors, 12MHz clock, on-board PLL
+- [Tiny VGA PMOD](https://github.com/mole99/tiny-vga) - Plugs into the J2 PMOD port on the iCEstick, with inputs of a 2 bit red, green and blue channel alongside hsync and vsync values for the VGA timing. It outputs to a female VGA port.
+- VGA to HDMI Adapter - Has a male VGA port on one side and a female HDMI port on the other. Requires power through a USB cable to support adapter.
+- Breadboard - Connect the left, right, and reset buttons to the ports on the iCEstick.
+
 ## Module Design
  
 ![FPGA Brick Breaker module hierarchy](./module_hierarchy.png)
@@ -29,12 +36,3 @@ The design is organized around three main submodules driven by a single `clk` in
 ## Challenges
 
 The original design consisted of a title screen, an info bar that showed how many lives left and the score. However to run this on the iCE40HX1K, the design had to be simplified. To get Logic Cell utilization from 250% to 95%, all of the text displays had to be removed.
-
-## Hardware
-
-- iCE40HX1K - 1,280 Logic Cells, PMOD Connectors, 12MHz clock, on-board PLL
-- [Tiny VGA PMOD](https://github.com/mole99/tiny-vga) - Plugs into the J2 PMOD port on the iCEstick, with inputs of a 2 bit red, green and blue channel alongside hsync and vsync values for the VGA timing. It outputs to a female VGA port.
-- VGA to HDMI Adapter - Has a male VGA port on one side and a female HDMI port on the other. Requires power through a USB cable to support adapter.
-- Breadboard - Connect the left, right, and reset buttons to the ports on the iCEstick.
-
-
