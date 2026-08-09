@@ -4,7 +4,6 @@ module main (
     input clk,
     input btn_left,
     input btn_right,
-    input btn_go,
     input btn_rst,
 
     //Outputs
@@ -13,34 +12,41 @@ module main (
     output wire [1:0] r,
     output wire [1:0] g,
     output wire [1:0] b,
-
-    output wire [3:0]   led,
-    output wire         rst_led
 );
   //STATE
   reg  [1:0] state;
 
-  wire rst_sig  = ~btn_rst;
-  wire go_sig   = ~btn_go;
-  wire left_sig = ~btn_left;
-  wire right_sig= ~btn_right;
+  wire rst_sig;
+  wire left_sig;
+  wire right_sig;
+  wire go_sig;
+
+  input_manager inputs(
+    .btn_left(btn_left),
+    .btn_right(btn_right),
+    .btn_rst(btn_rst),
+    .left_sig(left_sig),
+    .right_sig(right_sig),
+    .go_sig(go_sig),
+    .rst_sig(rst_sig)
+  );
 
   //VGA CLOCK GENERATOR
   wire       vga_clk;
 
   //Create vga clock signal of 25.125 MHz
-//   pll clk_multiplier (
-//       .inp_clk(clk),
-//       .out_clk(vga_clk)
-//   );
+  pll clk_multiplier (
+      .inp_clk(clk),
+      .out_clk(vga_clk)
+  );
 
-   assign vga_clk = clk;  //Simulation clock
+//    assign vga_clk = clk;  //Simulation clock
 
-  reg [23:0] clk_alive_counter = 0;
-  always @(posedge vga_clk) clk_alive_counter <= clk_alive_counter + 1;
-  assign led[0] = clk_alive_counter[23];  // toggles ~once per second at 25MHz, ~once every 2s at 12MHz
-  //   assign led = (state == 2'b00) ? 4'b0001 : (state == 2'b01) ? 4'b0010 : (state == 2'b10) ? 4'b0100 : 4'b1000;
-  assign rst_led = btn_rst;
+//   reg [23:0] clk_alive_counter = 0;
+//   always @(posedge vga_clk) clk_alive_counter <= clk_alive_counter + 1;
+//   assign led[0] = clk_alive_counter[23];  // toggles ~once per second at 25MHz, ~once every 2s at 12MHz
+//   //   assign led = (state == 2'b00) ? 4'b0001 : (state == 2'b01) ? 4'b0010 : (state == 2'b10) ? 4'b0100 : 4'b1000;
+//   assign rst_led = btn_rst;
 
   //VGA TIMING GENERATOR
 
@@ -66,10 +72,10 @@ module main (
   wire signed [  9:0] ball_pos_y;
   wire signed [ 10:0] paddle_pos_x;
 
-  wire        [79:0] brick_alive;
+  reg        [79:0] brick_alive;
 
   wire        [  1:0] lives;
-  wire        [ 13:0] score;
+//   wire        [ 13:0] score;
 
   //GAME ELEMENT CONSTANTS
   //States
@@ -79,18 +85,18 @@ module main (
   localparam STATE_OVER = 2'd3;
 
   //DEFAULT VALUES
-  localparam signed BALL_START_X = 11'sd283;
-  localparam signed BALL_START_Y = 10'sd231;
-  localparam signed BALL_START_DX = -4'sd3;
-  localparam signed BALL_START_DY = -4'sd3;
+  localparam signed BALL_START_X = 11'sd320;
+  localparam signed BALL_START_Y = 10'sd230;
+  localparam signed BALL_START_DX = 4'sd1;
+  localparam signed BALL_START_DY = -4'sd1;
   localparam signed PADDLE_START_X = 11'sd320;  //Middle of paddle
   localparam signed PADDLE_POS_Y = 10'sd400;  //Top of paddle
   localparam START_LIVES = 2'd3;
   localparam signed BALL_RADIUS = 4'd6;
-  localparam signed PADDLE_WIDTH = 6'd30;  //Half the width
-  localparam signed PADDLE_HEIGHT = 5'd6;  //Full Height
+  localparam signed PADDLE_WIDTH = 6'sd30;  //Half the width
+  localparam signed PADDLE_HEIGHT = 5'sd6;  //Full Height
   localparam signed PADDLE_DX = 4'd3;
-  localparam INFO_HEIGHT = 7'd50;
+  localparam INFO_HEIGHT = 7'd0;
   localparam signed CEIL_Y = INFO_HEIGHT + 5;
 
   //BRICK DEFAULT VALUES
@@ -100,15 +106,15 @@ module main (
   localparam BRICK_GAP_Y = 0;
 
   localparam NUM_ROWS = 4;
-  localparam NUM_COLS = (640 + BRICK_GAP_X) / (BRICK_WIDTH + BRICK_GAP_X);
+  localparam NUM_COLS = 20;
   localparam FIRST_ROW_Y = 100;
-  localparam LAST_ROW_Y = (100 + NUM_ROWS * 16);
+  localparam LAST_ROW_Y = (100 + NUM_ROWS * 16) - 1;
   localparam FIRST_COL_X = 0;
 
 
 
   //GAME LOGIC
-  game_logic_worse #(
+  game_logic_simplified #(
       .STATE_IDLE(STATE_IDLE),
       .STATE_START(STATE_START),
       .STATE_PLAY(STATE_PLAY),
@@ -136,6 +142,7 @@ module main (
       .LAST_ROW_Y(LAST_ROW_Y),
       .FIRST_COL_X(FIRST_COL_X)
   ) game (
+      .vga_clk(vga_clk),
       .frame_tick(frame_tick),
       .btn_go(go_sig),
       .btn_rst(rst_sig),
@@ -146,12 +153,12 @@ module main (
       .paddle_pos_x(paddle_pos_x),
       .state(state),
       .brick_alive(brick_alive),
-      .lives(lives),
-      .score(score)
+      .lives(lives)
+    //   .score(score)
   );
 
   //PIXEL MUX
-  mux #(
+  mux_simplified #(
       .STATE_IDLE(STATE_IDLE),
       .STATE_START(STATE_START),
       .STATE_PLAY(STATE_PLAY),
@@ -182,7 +189,7 @@ module main (
       .state(state),
       .brick_alive(brick_alive),
       .lives(lives),
-      .score(score),
+    //   .score(score),
       .r(r),
       .g(g),
       .b(b)
