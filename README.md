@@ -17,7 +17,7 @@ This project generates the video signal and game logic for Brick Breaker directl
 
 ## Module Hierarchy
  
-![FPGA Brick Breaker module hierarchy](./images/module_hierarchy.png)
+![FPGA Brick Breaker module hierarchy](./module_hierarchy.png)
  
 The design is organized around three main submodules driven by a single `clk` input:
  
